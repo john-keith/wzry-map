@@ -131,11 +131,12 @@
     controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
     controls.dampingFactor = 0.2;
     controls.screenSpacePanning = false;
+    controls.enableRotate = false
     controls.minDistance = 50;
     controls.maxDistance = 50;
     controls.maxPolarAngle = Math.PI / 4;
 
-    console.log(controls)
+    // console.log(controls)
 
 
     let loader = new THREE.GLTFLoader().setPath( './model/' );
