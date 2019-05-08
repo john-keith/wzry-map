@@ -108,6 +108,7 @@
         camera = new THREE.PerspectiveCamera(45, size.width / size.height, 0.5, 20000)
         camera.position.set(10, 10, 5)
         camera.up.set(0, 0, 1)
+        camera.lookAt(new THREE.Vector3(218.27291759843078, -4.683324102610722, 0))
 
         renderer = new THREE.WebGLRenderer({
         antialias: true,
@@ -120,7 +121,7 @@
 
         renderer.gammaFactor = 2
         renderer.gammaOutput = true
-        // renderer.gammaInput = true
+        // renderer.gammaInput = 2
     }
     var dom = document.querySelector('#output')
     init(dom)
@@ -134,10 +135,18 @@
     controls.maxDistance = 50;
     controls.maxPolarAngle = Math.PI / 4;
 
+    console.log(controls)
+
 
     let loader = new THREE.GLTFLoader().setPath( './model/' );
     THREE.DRACOLoader.setDecoderPath( './model/' );
     loader.setDRACOLoader( new THREE.DRACOLoader() )
+
+
+    
+    var mixer;
+    let ssxObject
+    var clock = new THREE.Clock();
     loader.load( 'model.gltf', function ( gltf ) {
         gltf.scene.rotation.x = Math.PI * .5
         gltf.scene.rotation.y = -Math.PI * .25
@@ -151,11 +160,42 @@
 
         scene.add(gltf.scene)
 
+        let tl = new THREE.TextureLoader()
+        tl.setPath('./model/')
+        loader.load('ssx.gltf', (ssx) => {
+            ssx.scene.rotation.x = Math.PI * .5
+            ssx.scene.rotation.y = Math.PI * 1.25
+            ssx.scene.scale.set(4, 4, 4)
+            ssx.scene.position.set(218.27291759843078, -4.683324102610722, 0)
+
+
+            ssx.scene.traverse((obj) => {
+                if(obj.material){
+                    let name = obj.name
+                    obj.material.map = tl.load(name + '.png')
+                }
+            })
+
+            scene.add(ssx.scene)
+
+            ssxObject = ssx.scene
+
+            mixer = new THREE.AnimationMixer(ssx.scene)
+            mixer.clipAction(ssx.animations[0]).play()
+        })
+
         document.querySelector('#layer').style.display = 'none'
     })
 
     const render = () => {
+        // if(ssxObject) controls.target = ssxObject.position
         controls.update()
+
+        // ssxObject && camera.lookAt(ssxObject.position)
+
+        var delta = clock.getDelta();
+        mixer && mixer.update( delta );
+
         renderer.render(scene, camera)
         requestAnimationFrame(render)
     }
