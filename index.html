@@ -33,9 +33,9 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%) translate(-50%);
+            transform: translateX(-50%) translateY(-50%);
             z-index: 10;
-            width: 80px;
+            width: 60px;
             height: 40px;
             margin: 0 auto;
         }
@@ -151,7 +151,7 @@
 
         scene.add(gltf.scene)
 
-        document.querySelector('#layer').style.display = 'none'
+        // document.querySelector('#layer').style.display = 'none'
     })
 
     const render = () => {
