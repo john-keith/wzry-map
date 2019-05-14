@@ -163,7 +163,7 @@
         scene.add(gltf.scene)
 
         let tl = new THREE.TextureLoader()
-        tl.setPath('./model/')
+        tl.setPath('https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/')
         loader.load('ssx.gltf', (ssx) => {
             ssx.scene.rotation.x = Math.PI * .5
             ssx.scene.rotation.y = Math.PI * 1.25
