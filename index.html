@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>王者地图</title>
-    <script src="https://threejs.org/build/three.js"></script>
-    <script src="./MapControls.js"></script>
-    <script src="https://threejs.org/examples/js/loaders/DRACOLoader.js"></script>
-    <script src="https://threejs.org/examples/js/loaders/GLTFLoader.js"></script>
+    <script src="./three.min.js"></script>
+    <script src="./MOBAControls.js"></script>
+    <script src="./DRACOLoader.min.js"></script>
+    <script src="./GLTFLoader.min.js"></script>
     <script src="https://cdn.bootcss.com/tween.js/r14/Tween.min.js"></script>
 </head>
 <style>
@@ -87,6 +87,10 @@
 </body>
 <script>
 
+    // 'dev' / 'prod'
+    // const evirenment = 'dev'
+    const evirenment = 'prod'
+
     let scene
     let camera
     let renderer
@@ -106,13 +110,12 @@
             height: dom.offsetHeight
         }
         camera = new THREE.PerspectiveCamera(45, size.width / size.height, 0.5, 20000)
-        camera.position.set(10, 10, 5)
+        camera.position.set(30, 30, 30)
         camera.up.set(0, 0, 1)
-        // camera.lookAt(new THREE.Vector3(218.27291759843078, -4.683324102610722, 0))
 
         renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true
+            antialias: true,
+            alpha: true
         })
         renderer.setSize(size.width, size.height)
         renderer.setClearColor(0x000000)
@@ -121,27 +124,14 @@
 
         renderer.gammaFactor = 2
         renderer.gammaOutput = true
-        // renderer.gammaInput = 2
     }
     var dom = document.querySelector('#output')
     init(dom)
 
-    let controls = new THREE.MapControls( camera, renderer.domElement );
-    //controls.addEventListener( 'change', render ); // call this only in static scenes (i.e., if there is no animation loop)
-    controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
-    controls.dampingFactor = 0.2;
-    controls.screenSpacePanning = false;
-    controls.enableRotate = false
-    controls.minDistance = 50;
-    controls.maxDistance = 50;
-    controls.maxPolarAngle = Math.PI / 4;
-    controls.originPanOffset.copy(new THREE.Vector3(218.27291759843078, -4.683324102610722, 0))
+    let controls
 
-    // console.log(controls)
-
-
-    let loader = new THREE.GLTFLoader().setPath( 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/' );
-    THREE.DRACOLoader.setDecoderPath( 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/' );
+    let loader = new THREE.GLTFLoader().setPath( evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/');
+    THREE.DRACOLoader.setDecoderPath(  evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/' );
     loader.setDRACOLoader( new THREE.DRACOLoader() )
 
 
@@ -156,17 +146,16 @@
         gltf.scene.traverse((item) => {
             if(item.material){
                 item.material = new THREE.MeshBasicMaterial({map: item.material.map, transparent: true, alphaTest: 0.9})
-                // item.material.needsUpdate = true
             }
         })
 
         scene.add(gltf.scene)
 
         let tl = new THREE.TextureLoader()
-        tl.setPath('https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/')
+        tl.setPath( evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/')
         loader.load('ssx.gltf', (ssx) => {
             ssx.scene.rotation.x = Math.PI * .5
-            ssx.scene.rotation.y = Math.PI * 1.25
+            ssx.scene.rotation.y = Math.PI * 1.5
             ssx.scene.scale.set(4, 4, 4)
             ssx.scene.position.set(218.27291759843078, -4.683324102610722, 0)
 
@@ -182,21 +171,77 @@
 
             ssxObject = ssx.scene
 
+            controls = new MOBAControls( camera, {
+                dom: renderer.domElement,
+                target: ssxObject
+            });
+
             mixer = new THREE.AnimationMixer(ssx.scene)
             mixer.clipAction(ssx.animations[0]).play()
+            document.querySelector('#layer').style.display = 'none'
         })
 
-        document.querySelector('#layer').style.display = 'none'
     })
 
+
+    let speedx = 0, speedy = 0
+
+    const keyDown = (e) => {
+        e.preventDefault()
+        let keyCode = e.keyCode
+        if(!ssxObject) return
+        if(keyCode == 87 || keyCode == 38){
+            speedy = -0.5
+        }
+
+        if(keyCode == 65 || keyCode == 37){
+            speedx = 0.5
+        }
+
+        if(keyCode == 83 || keyCode == 40){
+            speedy = 0.5
+        }
+
+        if(keyCode == 68 || keyCode == 39){
+            speedx = -0.5
+        }
+    }
+
+    const keyUp = (e) => {
+        e.preventDefault()
+        let keyCode = e.keyCode
+        if(!ssxObject) return
+        if(keyCode == 87 || keyCode == 38){
+            speedy = 0
+        }
+
+        if(keyCode == 65 || keyCode == 37){
+            speedx = 0
+        }
+
+        if(keyCode == 83 || keyCode == 40){
+            speedy = 0
+        }
+
+        if(keyCode == 68 || keyCode == 39){
+            speedx = 0
+        }
+    }
+
     const render = () => {
-        // if(ssxObject) controls.target = ssxObject.position
         controls && controls.update()
 
-        // ssxObject && camera.lookAt(ssxObject.position)
+        if(ssxObject){
+            ssxObject.position.y += speedy
+            ssxObject.position.x += speedx
+        }
 
         var delta = clock.getDelta();
-        mixer && mixer.update( delta );
+        if(speedx || speedy){
+            mixer && mixer.update( delta );
+        }else{
+            mixer && mixer.reset && mixer.reset() && mixer.update( delta )
+        }
 
         renderer.render(scene, camera)
         requestAnimationFrame(render)
@@ -231,6 +276,10 @@
     }
 
     window.addEventListener('resize', resize, false)
+
+
+    window.addEventListener('keydown', keyDown, false)
+    window.addEventListener('keyup', keyUp, false)
 
 </script>
 </html>

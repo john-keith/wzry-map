@@ -27,6 +27,9 @@ THREE.MapControls = function ( object, domElement ) {
 	// "target" sets the location of focus, where the object orbits around
 	this.target = new THREE.Vector3();
 
+
+	//相机默认的目标点在 0,0,0
+
 	// How far you can dolly in and out ( PerspectiveCamera only )
 	this.minDistance = 0;
 	this.maxDistance = Infinity;
@@ -64,7 +67,7 @@ THREE.MapControls = function ( object, domElement ) {
 	// Set to false to disable panning
 	this.enablePan = true;
 	this.panSpeed = 1.0;
-	this.screenSpacePanning = false; // if true, pan in screen-space
+	this.screenSpacePanning = true; // if true, pan in screen-space
 	this.keyPanSpeed = 7.0;	// pixels moved per arrow key push
 
 	// Set to true to automatically rotate around the target
@@ -86,9 +89,12 @@ THREE.MapControls = function ( object, domElement ) {
 	this.position0 = this.object.position.clone();
 	this.zoom0 = this.object.zoom;
 
+	// 重置就是目标点/位置恢复初始
 	//
 	// public methods
 	//
+
+	//  为旋转服务的
 
 	this.getPolarAngle = function () {
 
@@ -139,8 +145,11 @@ THREE.MapControls = function ( object, domElement ) {
 
 		return function update() {
 
+
+			//  实时相机位置
 			var position = scope.object.position;
 
+			//目前相机与目标点的向量
 			offset.copy( position ).sub( scope.target );
 
 			// rotate offset to "y-axis-is-up" space
