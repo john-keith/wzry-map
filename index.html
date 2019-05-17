@@ -72,6 +72,15 @@
         .loading span:nth-child(5){
             -webkit-animation-delay:0.8s;
         }
+
+        .tip{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            z-index: 10;
+            color: 'red';
+        }
 </style>
 <body>
     <div id="layer">
@@ -82,6 +91,7 @@
                     <span></span>
                     <span></span>
             </div>
+            <div class='tip'>开启屏幕旋转可以横置屏幕</div>
     </div>
     <div id="output">
 
@@ -90,8 +100,8 @@
 <script>
 
     // 'dev' / 'prod'
-    // const evirenment = 'dev'
-    const evirenment = 'prod'
+    const evirenment = 'dev'
+    // const evirenment = 'prod'
 
     if(evirenment == 'dev'){new VConsole()}
 
@@ -178,7 +188,6 @@
             scene.add(ssx.scene)
 
             ssxObject = ssx.scene
-
             controls = new MOBAControls( camera, {
                 dom: renderer.domElement,
                 target: ssxObject
@@ -187,11 +196,12 @@
             mixer = new THREE.AnimationMixer(ssx.scene)
             mixer.clipAction(ssx.animations[0]).play()
             document.querySelector('#layer').style.display = 'none'
+            orientationchange()
 
             let manager = nipplejs.create({
                 zone: dom,
                 multitouch: true,
-                maxNumberOfNipples: 2,
+                maxNumberOfNipples: 1,
                 catchDistance: 10,
                 color: 'black'
             })
@@ -312,6 +322,32 @@
     }
 
     window.addEventListener('resize', resize, false)
+
+    // const FullScreen = () => {
+    //     let isFullscreen = document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen
+    //     if(!isFullscreen){//进入全屏,多重短路表达式
+    //         (document.requestFullscreen && document.requestFullscreen())||
+    //         (document.mozRequestFullScreen && document.mozRequestFullScreen())||
+    //         (document.webkitRequestFullscreen && document.webkitRequestFullscreen())||
+    //         (document.msRequestFullscreen && document.msRequestFullscreen());
+    //     }else{	//退出全屏,三目运算符
+    //         document.exitFullscreen ? document.exitFullscreen():
+    //         document.mozCancelFullScreen ? document.mozCancelFullScreen():
+    //         document.webkitExitFullscreen ? document.webkitExitFullscreen():'';
+    //     }
+    // }
+    const orientationchange = () => {
+        if(window.innerHeight < window.innerWidth){
+            console.log('full')
+            document.requestFullscreen && document.requestFullscreen()
+        }else{
+            console.log('exist')
+            document.exitFullscreen && document.exitFullscreen()
+        }
+        resize()
+    }
+
+    // window.addEventListener('orientationchange', orientationchange, false);
 
 
     // window.addEventListener('keydown', keyDown, false)

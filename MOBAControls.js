@@ -94,14 +94,35 @@ class MOBAControls{
 
     onTouchStart = (e) => {
         e.preventDefault()
+        if(e.touches.length >= 2){
+            let touch = e.touches[1]
+            this.panStart.set(touch.pageX, touch.pageY)
+            this.panStartFlag = true
+        }
     }
 
     onTouchMove = (e) => {
         e.preventDefault()
+        if(!this.panStartFlag) return
+
+        if(e.touches.length >= 2){
+            let touch = e.touches[1]
+            this.panEnd.set(touch.pageX, touch.pageY)
+            this.panDelta.subVectors(this.panEnd, this.panStart).multiplyScalar(this.panSpeed)
+    
+            let {x, y} = this.panDelta
+            this.pan(x, y)
+    
+            this.panStart.copy(this.panEnd)
+        }else{
+            this.panStartFlag = false
+        }
+
     }
 
     onTouchEnd = (e) => {
         e.preventDefault()
+        this.panStartFlag = false
     }
 
     onMouseWheel = (e) => {
@@ -165,3 +186,5 @@ class MOBAControls{
         this.container.removeEventListener('mouseout', this.onMouseUp, false)
     }
 }
+
+// export default MOBAControls
