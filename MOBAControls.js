@@ -25,8 +25,6 @@ class MOBAControls{
         //缩放视野
         this.zoom = 1 // 暂时不写这个功能
 
-        //平移前的位置，用以复位
-        this.cameraPositionBeforePan = new THREE.Vector3()
         //记录鼠标位置
         this.panStart = new THREE.Vector2()
         this.panEnd = new THREE.Vector2()
@@ -34,16 +32,18 @@ class MOBAControls{
         //表示在平移进程中
         this.panStartFlag = false
 
-        //计算
-
-
         this.container.addEventListener('mousedown', this.onMouseDown, false)
         this.container.addEventListener('mousemove', this.onMouseMove, false)
         this.container.addEventListener('mouseup', this.onMouseUp, false)
+        // 解决鼠标跑出浏览器的问题
+        this.container.addEventListener('mouseout', this.onMouseUp, false)
 
         this.container.addEventListener('touchstart', this.onTouchStart, false)
         this.container.addEventListener('touchmove', this.onTouchMove, false)
         this.container.addEventListener('touchend', this.onTouchEnd, false)
+
+
+        this.container.addEventListener('contextmenu', this.onContextMenu, false)
     }
 
     
@@ -149,5 +149,19 @@ class MOBAControls{
         this.position.copy(this.cameraOriginPosition.clone().add(this.lookAtTarget))
         this.camera.position.copy(this.position)
         this.camera.lookAt(this.lookAtTarget)
+    }
+
+
+    dispose = () => {
+        this.container.removeEventListener('mousedown', this.onMouseDown, false)
+        this.container.removeEventListener('mousemove', this.onMouseMove, false)
+        this.container.removeEventListener('mouseup', this.onMouseUp, false)
+
+        this.container.removeEventListener('touchstart', this.onTouchStart, false)
+        this.container.removeEventListener('touchmove', this.onTouchMove, false)
+        this.container.removeEventListener('touchend', this.onTouchEnd, false)
+
+        this.container.removeEventListener('contextmenu', this.onContextMenu, false)
+        this.container.removeEventListener('mouseout', this.onMouseUp, false)
     }
 }

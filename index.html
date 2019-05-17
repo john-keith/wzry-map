@@ -9,6 +9,8 @@
     <script src="./MOBAControls.js"></script>
     <script src="./DRACOLoader.min.js"></script>
     <script src="./GLTFLoader.min.js"></script>
+    <script src="./nipplejs.min.js"></script>
+    <script src="./vconsole.min.js"></script>
     <script src="https://cdn.bootcss.com/tween.js/r14/Tween.min.js"></script>
 </head>
 <style>
@@ -91,6 +93,8 @@
     // const evirenment = 'dev'
     const evirenment = 'prod'
 
+    if(evirenment == 'dev'){new VConsole()}
+
     let scene
     let camera
     let renderer
@@ -139,6 +143,10 @@
     var mixer;
     let ssxObject
     var clock = new THREE.Clock();
+
+    const speedNumber = 0.3
+    let speed = new THREE.Vector2()
+
     loader.load( 'model.gltf', function ( gltf ) {
         gltf.scene.rotation.x = Math.PI * .5
         gltf.scene.rotation.y = -Math.PI * .25
@@ -156,7 +164,7 @@
         loader.load('ssx.gltf', (ssx) => {
             ssx.scene.rotation.x = Math.PI * .5
             ssx.scene.rotation.y = Math.PI * 1.5
-            ssx.scene.scale.set(4, 4, 4)
+            ssx.scene.scale.set(3.2, 3.2, 3.2)
             ssx.scene.position.set(218.27291759843078, -4.683324102610722, 0)
 
 
@@ -179,65 +187,93 @@
             mixer = new THREE.AnimationMixer(ssx.scene)
             mixer.clipAction(ssx.animations[0]).play()
             document.querySelector('#layer').style.display = 'none'
+
+            let manager = nipplejs.create({
+                zone: dom,
+                multitouch: true,
+                maxNumberOfNipples: 2,
+                catchDistance: 10,
+                color: 'black'
+            })
+
+            manager.on('start', (evt, data) => {
+                console.log('start')
+            })
+
+            manager.on('move', (evt, data) => {
+                console.log('move')
+                if(data.angle){
+                    let degree = data.angle.radian
+                    speed.x = - Math.cos(degree)
+                    speed.y = - Math.sin(degree)
+                }else{
+                    speed.set(0, 0)
+                }
+            })
+
+            manager.on('end', (evt, data) => {
+                console.log('end')
+                speed.set(0, 0)
+            }
+            )
         })
 
     })
 
+ //  nipple.js全面替代键盘操作
+    // const keyDown = (e) => {
+    //     e.preventDefault()
+    //     let keyCode = e.keyCode
+    //     if(!ssxObject) return
+    //     if(keyCode == 87 || keyCode == 38){//w
+    //         speed.y = -1
+    //     }
 
-    let speedx = 0, speedy = 0
+    //     if(keyCode == 65 || keyCode == 37){//a
+    //         speed.x = 1
+    //     }
 
-    const keyDown = (e) => {
-        e.preventDefault()
-        let keyCode = e.keyCode
-        if(!ssxObject) return
-        if(keyCode == 87 || keyCode == 38){
-            speedy = -0.5
-        }
+    //     if(keyCode == 83 || keyCode == 40){//s
+    //         speed.y = 1
+    //     }
 
-        if(keyCode == 65 || keyCode == 37){
-            speedx = 0.5
-        }
+    //     if(keyCode == 68 || keyCode == 39){//d
+    //         speed.x = -1
+    //     }
+    // }
 
-        if(keyCode == 83 || keyCode == 40){
-            speedy = 0.5
-        }
+    // const keyUp = (e) => {
+    //     e.preventDefault()
+    //     let keyCode = e.keyCode
+    //     if(!ssxObject) return
+    //     if(keyCode == 87 || keyCode == 38){
+    //         speed.y = 0
+    //     }
 
-        if(keyCode == 68 || keyCode == 39){
-            speedx = -0.5
-        }
-    }
+    //     if(keyCode == 65 || keyCode == 37){
+    //         speed.x = 0
+    //     }
 
-    const keyUp = (e) => {
-        e.preventDefault()
-        let keyCode = e.keyCode
-        if(!ssxObject) return
-        if(keyCode == 87 || keyCode == 38){
-            speedy = 0
-        }
+    //     if(keyCode == 83 || keyCode == 40){
+    //         speed.y = 0
+    //     }
 
-        if(keyCode == 65 || keyCode == 37){
-            speedx = 0
-        }
-
-        if(keyCode == 83 || keyCode == 40){
-            speedy = 0
-        }
-
-        if(keyCode == 68 || keyCode == 39){
-            speedx = 0
-        }
-    }
+    //     if(keyCode == 68 || keyCode == 39){
+    //         speed.x = 0
+    //     }
+    // }
 
     const render = () => {
         controls && controls.update()
 
-        if(ssxObject){
-            ssxObject.position.y += speedy
-            ssxObject.position.x += speedx
+        if(ssxObject && speed.length() > 0){
+            let {x, y} = speed.clone().normalize().multiplyScalar(speedNumber)
+            ssxObject.position.y += y
+            ssxObject.position.x += x
         }
 
         var delta = clock.getDelta();
-        if(speedx || speedy){
+        if(speed.length() > 0){
             mixer && mixer.update( delta );
         }else{
             mixer && mixer.reset && mixer.reset() && mixer.update( delta )
@@ -278,8 +314,8 @@
     window.addEventListener('resize', resize, false)
 
 
-    window.addEventListener('keydown', keyDown, false)
-    window.addEventListener('keyup', keyUp, false)
+    // window.addEventListener('keydown', keyDown, false)
+    // window.addEventListener('keyup', keyUp, false)
 
 </script>
 </html>
