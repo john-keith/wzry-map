@@ -32,18 +32,18 @@ class MOBAControls{
         //表示在平移进程中
         this.panStartFlag = false
 
-        this.container.addEventListener('mousedown', this.onMouseDown, false)
-        this.container.addEventListener('mousemove', this.onMouseMove, false)
-        this.container.addEventListener('mouseup', this.onMouseUp, false)
-        // 解决鼠标跑出浏览器的问题
-        this.container.addEventListener('mouseout', this.onMouseUp, false)
+        // this.container.addEventListener('mousedown', this.onMouseDown, false)
+        // this.container.addEventListener('mousemove', this.onMouseMove, false)
+        // this.container.addEventListener('mouseup', this.onMouseUp, false)
+        // // 解决鼠标跑出浏览器的问题
+        // this.container.addEventListener('mouseout', this.onMouseUp, false)
 
         this.container.addEventListener('touchstart', this.onTouchStart, false)
         this.container.addEventListener('touchmove', this.onTouchMove, false)
         this.container.addEventListener('touchend', this.onTouchEnd, false)
 
 
-        this.container.addEventListener('contextmenu', this.onContextMenu, false)
+        // this.container.addEventListener('contextmenu', this.onContextMenu, false)
     }
 
     
@@ -60,17 +60,18 @@ class MOBAControls{
      * @memberof MOBAControls
      */
 
-    onContextMenu = (e) => { // 屏蔽右键功能
+    onContextMenu(e){ // 屏蔽右键功能
         e.preventDefault()
+        console.log('you')
     }
 
-    onMouseDown = (e) => {
+    onMouseDown(e){
         e.preventDefault()
         this.panStartFlag = true
         this.panStart.set(e.clientX, e.clientY)
     }
 
-    onMouseMove = (e) => {
+    onMouseMove(e){
         e.preventDefault()
 
         if(!this.panStartFlag) return
@@ -87,12 +88,12 @@ class MOBAControls{
 
     }
 
-    onMouseUp = (e) => {
+    onMouseUp(e){
         e.preventDefault()
         this.panStartFlag = false
     }
 
-    onTouchStart = (e) => {
+    onTouchStart(e){
         e.preventDefault()
         if(e.touches.length >= 2){
             let touch = e.touches[1]
@@ -101,7 +102,7 @@ class MOBAControls{
         }
     }
 
-    onTouchMove = (e) => {
+    onTouchMove(e){
         e.preventDefault()
         if(!this.panStartFlag) return
 
@@ -120,16 +121,16 @@ class MOBAControls{
 
     }
 
-    onTouchEnd = (e) => {
+    onTouchEnd(e){
         e.preventDefault()
         this.panStartFlag = false
     }
 
-    onMouseWheel = (e) => {
+    onMouseWheel(e){
         e.preventDefault()
     }
 
-    panLeft = (distance) => {
+    panLeft(distance){
         let v = new THREE.Vector3()
 
         let cameraMatrix = this.camera.matrix
@@ -139,7 +140,7 @@ class MOBAControls{
         this.lookAtTarget.add( v )
     }
 
-    panUp = (distance) => {
+    panUp(distance){
         let v = new THREE.Vector3()
 
         let cameraMatrix = this.camera.matrix
@@ -150,7 +151,7 @@ class MOBAControls{
         this.lookAtTarget.add( v )
     }
 
-    pan = (x, y) => {
+    pan(x, y){
         let offset = new THREE.Vector3()
 
         if(this.camera.isPerspectiveCamera){
@@ -163,7 +164,7 @@ class MOBAControls{
 
     }
 
-    update = () => {
+    update(){
         if(!this.panStartFlag){
             this.lookAtTarget.copy(this.target.position)
         }
@@ -173,17 +174,17 @@ class MOBAControls{
     }
 
 
-    dispose = () => {
-        this.container.removeEventListener('mousedown', this.onMouseDown, false)
-        this.container.removeEventListener('mousemove', this.onMouseMove, false)
-        this.container.removeEventListener('mouseup', this.onMouseUp, false)
+    dispose(){
+        // this.container.removeEventListener('mousedown', this.onMouseDown, false)
+        // this.container.removeEventListener('mousemove', this.onMouseMove, false)
+        // this.container.removeEventListener('mouseup', this.onMouseUp, false)
 
         this.container.removeEventListener('touchstart', this.onTouchStart, false)
         this.container.removeEventListener('touchmove', this.onTouchMove, false)
         this.container.removeEventListener('touchend', this.onTouchEnd, false)
 
-        this.container.removeEventListener('contextmenu', this.onContextMenu, false)
-        this.container.removeEventListener('mouseout', this.onMouseUp, false)
+        // this.container.removeEventListener('contextmenu', this.onContextMenu, false)
+        // this.container.removeEventListener('mouseout', this.onMouseUp, false)
     }
 }
 

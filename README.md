@@ -8,4 +8,4 @@ https://john-keith.github.io/wzry-map/
 单指视野跟随模型  
 双指移动视野  
   
-模型操作将慢慢丰富
+模型以及模型操作将慢慢丰富

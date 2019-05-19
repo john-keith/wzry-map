@@ -79,7 +79,9 @@
             left: 50%;
             transform: translateX(-50%) translateY(20px);
             z-index: 10;
-            color: 'red';
+        }
+        .tip span{
+            color: #0ff
         }
 </style>
 <body>
@@ -91,7 +93,9 @@
                     <span></span>
                     <span></span>
             </div>
-            <div class='tip'>开启屏幕旋转可以横置屏幕</div>
+            <div class='tip'>
+                <span>开启屏幕旋转可以横置屏幕</span>
+            </div>
     </div>
     <div id="output">
 
@@ -116,7 +120,7 @@
 
         let light = new THREE.DirectionalLight( 0xffffff)
         light.castShadow = true
-        light.position.set(20, 20, 20)
+        light.position.set(20, 20, 30)
         scene.add( light )
 
         size = {
@@ -151,10 +155,10 @@
 
     
     var mixer;
-    let ssxObject
+    let ssxObject, ssxOriginRotation
     var clock = new THREE.Clock();
 
-    const speedNumber = 0.3
+    const speedNumber = 0.2
     let speed = new THREE.Vector2()
 
     loader.load( 'model.gltf', function ( gltf ) {
@@ -174,7 +178,10 @@
         loader.load('ssx.gltf', (ssx) => {
             ssx.scene.rotation.x = Math.PI * .5
             ssx.scene.rotation.y = Math.PI * 1.5
-            ssx.scene.scale.set(3.2, 3.2, 3.2)
+
+            ssxOriginRotation = ssx.scene.rotation.clone()
+
+            ssx.scene.scale.set(4, 4, 4)
             ssx.scene.position.set(218.27291759843078, -4.683324102610722, 0)
 
 
@@ -196,7 +203,6 @@
             mixer = new THREE.AnimationMixer(ssx.scene)
             mixer.clipAction(ssx.animations[0]).play()
             document.querySelector('#layer').style.display = 'none'
-            orientationchange()
 
             let manager = nipplejs.create({
                 zone: dom,
@@ -206,14 +212,27 @@
                 color: 'black'
             })
 
+            let position = new THREE.Vector2()
             manager.on('start', (evt, data) => {
-                console.log('start')
+                let {x, y} = data.position
+                position.set(x, y)
             })
 
             manager.on('move', (evt, data) => {
-                console.log('move')
+                let {x, y} = data.position
+
+                let offset = position.clone()
+                let length = offset.sub(new THREE.Vector2(x, y)).length()
+
+                // 限制最小响应
+                if(length < 20){
+                    speed.set(0, 0)
+                    return
+                }
                 if(data.angle){
-                    let degree = data.angle.radian
+                    let degree = data.angle.radian - Math.PI * .25
+                    let {x, y, z} = ssxOriginRotation
+                    ssxObject.rotation.set(x, y + degree, z)
                     speed.x = - Math.cos(degree)
                     speed.y = - Math.sin(degree)
                 }else{
@@ -222,8 +241,8 @@
             })
 
             manager.on('end', (evt, data) => {
-                console.log('end')
                 speed.set(0, 0)
+                position.set(0, 0)
             }
             )
         })
@@ -286,7 +305,7 @@
         if(speed.length() > 0){
             mixer && mixer.update( delta );
         }else{
-            mixer && mixer.reset && mixer.reset() && mixer.update( delta )
+            mixer && mixer.reset && mixer.reset()
         }
 
         renderer.render(scene, camera)
@@ -339,10 +358,10 @@
     const orientationchange = () => {
         if(window.innerHeight < window.innerWidth){
             console.log('full')
-            document.requestFullscreen && document.requestFullscreen()
+            // document.body.requestFullscreen && document.body.requestFullscreen()
         }else{
             console.log('exist')
-            document.exitFullscreen && document.exitFullscreen()
+            // document.exitFullscreen && document.exitFullscreen()
         }
         resize()
     }
