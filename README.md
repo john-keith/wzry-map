@@ -4,4 +4,8 @@
 https://john-keith.github.io/wzry-map/
 
 
-目前实现视野跟随模型以及mapcontrols的基本操作，但是操作感略差，之后将慢慢修复
+目前实现  
+单指视野跟随模型  
+双指移动视野  
+  
+模型操作将慢慢丰富
