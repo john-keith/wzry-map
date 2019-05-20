@@ -37,6 +37,9 @@ class MOBAControls{
         // this.container.addEventListener('mouseup', this.onMouseUp, false)
         // // 解决鼠标跑出浏览器的问题
         // this.container.addEventListener('mouseout', this.onMouseUp, false)
+        this.onTouchStart = this.onTouchStart.bind(this)
+        this.onTouchMove = this.onTouchMove.bind(this)
+        this.onTouchEnd = this.onTouchEnd.bind(this)
 
         this.container.addEventListener('touchstart', this.onTouchStart, false)
         this.container.addEventListener('touchmove', this.onTouchMove, false)
@@ -95,6 +98,7 @@ class MOBAControls{
 
     onTouchStart(e){
         e.preventDefault()
+        console.log(e.touches.length)
         if(e.touches.length >= 2){
             let touch = e.touches[1]
             this.panStart.set(touch.pageX, touch.pageY)

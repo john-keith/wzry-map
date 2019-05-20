@@ -154,12 +154,24 @@
 
 
     
-    var mixer;
+    var mixer, action;
     let ssxObject, ssxOriginRotation
     var clock = new THREE.Clock();
 
     const speedNumber = 0.2
     let speed = new THREE.Vector2()
+
+
+    //设置站立
+    const setStand = () => {
+        speed.set(0, 0)
+        action && action.stop()
+    }
+
+    const go = (x, y) => {
+        speed.set(x, y)
+        action && action.play()
+    }
 
     loader.load( 'model.gltf', function ( gltf ) {
         gltf.scene.rotation.x = Math.PI * .5
@@ -201,14 +213,14 @@
             });
 
             mixer = new THREE.AnimationMixer(ssx.scene)
-            mixer.clipAction(ssx.animations[0]).play()
+            action = mixer.clipAction(ssx.animations[0])
+            action.play()
             document.querySelector('#layer').style.display = 'none'
 
             let manager = nipplejs.create({
                 zone: dom,
                 multitouch: true,
                 maxNumberOfNipples: 1,
-                catchDistance: 10,
                 color: 'black'
             })
 
@@ -226,22 +238,21 @@
 
                 // 限制最小响应
                 if(length < 20){
-                    speed.set(0, 0)
+                    setStand()
                     return
                 }
                 if(data.angle){
                     let degree = data.angle.radian - Math.PI * .25
                     let {x, y, z} = ssxOriginRotation
                     ssxObject.rotation.set(x, y + degree, z)
-                    speed.x = - Math.cos(degree)
-                    speed.y = - Math.sin(degree)
+                    go(- Math.cos(degree), - Math.sin(degree))
                 }else{
-                    speed.set(0, 0)
+                    setStand()
                 }
             })
 
             manager.on('end', (evt, data) => {
-                speed.set(0, 0)
+                setStand()
                 position.set(0, 0)
             }
             )
@@ -304,8 +315,6 @@
         var delta = clock.getDelta();
         if(speed.length() > 0){
             mixer && mixer.update( delta );
-        }else{
-            mixer && mixer.reset && mixer.reset()
         }
 
         renderer.render(scene, camera)
