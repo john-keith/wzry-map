@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="output">
+
+    </div>
+</body>
+<script>
+
+    class LevelBlood{
+
+        constructor(name, options){
+            this.color = options.color || 0x0000ff // 血条颜色
+            this.totalBlood = options.totalBlood|| 100// 总血量
+            this.currentBlood = options.currentBlood || 100 //即时血量
+            this.totalBlue = options.totalBlue|| 100// 总蓝量
+            this.currentBlue = options.currentBlue || 100 //即时蓝量
+            this.level = options.level || 1//初始等级
+            this.bloodCellNumber = options.cellNumber || 10//单刻度值
+            this.backgroundColor = options.backgroundColor || '#003'//整个背景色
+            this.bloodColor = options.bloodColor || '#0f0' //血条颜色
+            this.blueColor = options.blueColor || '#00f' //蓝条颜色
+            this.inLevel = options.inLevel || 0 //级内进度
+            this.name = name
+
+            this.init()
+            this.draw()
+        }
+
+        init(){
+            this.canvas = document.createElement('canvas')
+            this.canvas.width = 512
+            this.canvas.height = 128
+
+            this.ctx = this.canvas.getContext('2d')
+        }
+
+        config(options){
+            this.color = options.color || this.color// 血条颜色
+            this.totalBlood = options.totalBlood|| this.totalBlood// 总血量
+            this.currentBlood = options.currentBlood || this.currentBlood //即时血量
+            this.totalBlue = options.totalBlue|| this.totalBlue// 总蓝量
+            this.currentBlue = options.currentBlue || this.currentBlue //即时蓝量
+            this.level = options.level || this.level//初始等级
+            this.bloodCellNumber = options.cellNumber || this.bloodCellNumber//单刻度值
+            this.backgroundColor = options.backgroundColor || this.backgroundColor//整个背景色
+            this.bloodColor = options.bloodColor || this.bloodColor //血条颜色
+            this.blueColor = options.blueColor || this.blueColor //蓝条颜色
+            this.inLevel = options.inLevel || this.inLevel //级内进度
+            
+            this.draw()
+        }
+
+        draw(){
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.width)
+
+            // 绘圆
+            this.ctx.fillStyle = this.backgroundColor
+            let halfHeight = this.canvas.height / 2
+            let r = halfHeight * .8
+
+            this.ctx.arc(halfHeight, halfHeight, r, 0, Math.PI * 2)
+            this.ctx.fill()
+
+            // 绘矩形
+            let rectHeight = 50
+            let marginTop = (this.canvas.height - rectHeight) * .5
+            let marginBottom = (this.canvas.height + rectHeight) * .5
+
+            this.ctx.fillStyle = this.backgroundColor
+            this.ctx.beginPath()
+            this.ctx.moveTo(halfHeight, marginTop)
+            this.ctx.lineTo(this.canvas.width, marginTop)
+            this.ctx.lineTo(this.canvas.width, marginBottom)
+            this.ctx.lineTo(halfHeight, marginBottom)
+            this.ctx.lineTo(halfHeight, marginTop)
+            this.ctx.closePath()
+
+            this.ctx.fill()
+
+            // 绘制等级
+            this.ctx.font = '40px Arial'
+            this.ctx.textAlign = 'center'
+            this.ctx.fillStyle = '#fff'
+            this.ctx.textBaseline ="middle"
+
+            this.ctx.fillText(this.level, halfHeight, halfHeight)
+
+            //绘制名称
+            this.ctx.font = '40px Arial'
+            this.ctx.textAlign = 'center'
+            this.ctx.fillStyle = '#f00'
+            this.ctx.textBaseline ="top"
+
+            this.ctx.fillText(this.name, (this.canvas.width - this.canvas.height) * .5 + this.canvas.height, 0)
+
+            let offsetY = 5
+            let offsetX = 6
+            let totalHeight = rectHeight - offsetY * 3
+            let blueBloodStart = halfHeight + r
+
+            //绘制蓝条
+            this.ctx.fillStyle = this.blueColor
+            this.ctx.beginPath()
+            this.ctx.moveTo(blueBloodStart, marginBottom - totalHeight * .2 - offsetY)
+            this.ctx.lineTo(this.canvas.width - offsetX, marginBottom - totalHeight * .2 - offsetY)
+            this.ctx.lineTo(this.canvas.width - offsetX, marginBottom - offsetY)
+            this.ctx.lineTo(blueBloodStart, marginBottom - offsetY)
+            this.ctx.lineTo(blueBloodStart, marginBottom - totalHeight * .2 - offsetY)
+            this.ctx.closePath()
+
+            this.ctx.fill()
+
+            //绘制血条
+            this.ctx.fillStyle = this.bloodColor
+            this.ctx.beginPath()
+            this.ctx.moveTo(blueBloodStart, marginTop + offsetY)
+            this.ctx.lineTo(this.canvas.width - offsetX, marginTop + offsetY)
+            this.ctx.lineTo(this.canvas.width - offsetX, marginTop + totalHeight * .8 + offsetY)
+            this.ctx.lineTo(blueBloodStart, marginTop + totalHeight * .8 + offsetY)
+            this.ctx.lineTo(blueBloodStart, marginTop + offsetY)
+            this.ctx.closePath()
+
+            this.ctx.fill()
+
+            //血量刻度
+            this.ctx.lineStyle = this.backgroundColor
+            this.ctx.lineWidth = 3
+
+            let splitNumber = this.totalBlood / this.bloodCellNumber
+            let step = (this.canvas.width - offsetX - blueBloodStart) / splitNumber
+            for(let i = 0; i < splitNumber; i ++){
+                let length = 9
+                if(i % 5 == 0){
+                    length = 18
+                }
+                this.ctx.beginPath()
+                this.ctx.moveTo(blueBloodStart + i * step, marginTop + offsetY)
+                this.ctx.lineTo(blueBloodStart + i * step, marginTop + offsetY + length)
+                this.ctx.stroke()
+                this.ctx.closePath()
+            }
+        }
+
+        test(id){// 测试输出用
+            let dom = document.querySelector(id)
+            dom.appendChild(this.canvas)
+        }
+
+    }
+
+    let test = new LevelBlood('汤圆skr狠人', {})
+    test.test('#output')
+
+
+
+</script>
+</html>
