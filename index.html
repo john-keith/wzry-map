@@ -109,293 +109,475 @@
 
     if(evirenment == 'dev'){new VConsole()}
 
-    let scene
-    let camera
-    let renderer
-    const init = (dom) => {
-        scene = new THREE.Scene()
+    window.onload = () => {
+        let name = prompt('请给自己角色取个名字', 'SB')
+        let scene
+        let camera
+        let renderer
+        const init = (dom) => {
+            scene = new THREE.Scene()
+            
+            let ambientLight = new THREE.AmbientLight( 0xffffff)
+            scene.add(ambientLight)
+
+            let light = new THREE.DirectionalLight( 0xffffff)
+            light.castShadow = true
+            light.shadow.camera.left = light.shadow.camera.bottom = -300
+            light.shadow.camera.right = light.shadow.camera.top = 300
+            light.position.set(10, -50, 100)
+            scene.add(light)
+
+            size = {
+                width: dom.offsetWidth,
+                height: dom.offsetHeight
+            }
+            camera = new THREE.PerspectiveCamera(45, size.width / size.height, 0.5, 20000)
+            evirenment == 'dev'? camera.position.set(30, 30, 30): camera.position.set(30, 30, 30)
+            camera.up.set(0, 0, 1)
+
+            renderer = new THREE.WebGLRenderer({
+                antialias: true,
+                alpha: true
+            })
+            renderer.setSize(size.width, size.height)
+            renderer.setClearColor(0x000000)
+            renderer.setPixelRatio(window.devicePixelRatio)
+            dom.appendChild(renderer.domElement)
+
+            renderer.gammaFactor = 2
+            renderer.gammaOutput = true
+            renderer.shadowMap.enabled = true
+        }
+        var dom = document.querySelector('#output')
+        init(dom)
+
+        let controls
+
+        let loader = new THREE.GLTFLoader().setPath( evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/');
+        THREE.DRACOLoader.setDecoderPath(  evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/' );
+        loader.setDRACOLoader( new THREE.DRACOLoader() )
+
+        class LevelBlood{
+
+            constructor(name, options){
+                this.color = options.color || 0x0000ff // 血条颜色
+                this.totalBlood = options.totalBlood|| 500// 总血量
+                this.currentBlood = options.currentBlood || 500 //即时血量
+                this.totalBlue = options.totalBlue|| 100// 总蓝量
+                this.currentBlue = options.currentBlue || 100 //即时蓝量
+                this.level = options.level || 1//初始等级
+                this.bloodCellNumber = options.cellNumber || 100//单刻度值
+                this.backgroundColor = options.backgroundColor || '#001'//整个背景色
+                this.bloodColor = options.bloodColor || '#0f0' //血条颜色
+                this.blueColor = options.blueColor || '#00f' //蓝条颜色
+                this.totalInLevel = options.totalInLevel || 100 //级内总进度
+                this.inLevel = options.inLevel || 0 //级内进度
+                this.name = name
+
+                this.init()
+                this.draw()
+            }
+
+            init(){
+                this.canvas = document.createElement('canvas')
+                this.canvas.width = 512
+                this.canvas.height = 128
+
+                this.ctx = this.canvas.getContext('2d')
+            }
+
+            config(options){
+                this.color = options.color || this.color// 血条颜色
+                this.totalBlood = options.totalBlood|| this.totalBlood// 总血量
+                this.currentBlood = options.currentBlood || this.currentBlood //即时血量
+                this.totalBlue = options.totalBlue|| this.totalBlue// 总蓝量
+                this.currentBlue = options.currentBlue || this.currentBlue //即时蓝量
+                this.level = options.level || this.level//初始等级
+                this.bloodCellNumber = options.cellNumber || this.bloodCellNumber//单刻度值
+                this.backgroundColor = options.backgroundColor || this.backgroundColor//整个背景色
+                this.bloodColor = options.bloodColor || this.bloodColor //血条颜色
+                this.blueColor = options.blueColor || this.blueColor //蓝条颜色
+                this.totalInLevel = options.totalInLevel || this.totalInLevel //级内总进度
+                this.inLevel = options.inLevel || this.inLevel //级内进度
+                
+                this.draw()
+            }
+
+            draw(){
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
+                // 绘圆
+                this.ctx.fillStyle = this.backgroundColor
+                let halfHeight = this.canvas.height / 2
+                let r = halfHeight * .8
+
+                this.ctx.arc(halfHeight, halfHeight, r, 0, Math.PI * 2)
+                this.ctx.fill()
+
+                // 绘矩形
+                let rectHeight = 50
+                let marginTop = (this.canvas.height - rectHeight) * .5
+                let marginBottom = (this.canvas.height + rectHeight) * .5
+
+                this.ctx.fillStyle = this.backgroundColor
+                this.ctx.beginPath()
+                this.ctx.moveTo(halfHeight, marginTop)
+                this.ctx.lineTo(this.canvas.width, marginTop)
+                this.ctx.lineTo(this.canvas.width, marginBottom)
+                this.ctx.lineTo(halfHeight, marginBottom)
+                this.ctx.lineTo(halfHeight, marginTop)
+                this.ctx.fill()
+                this.ctx.closePath()
+
+                //级内经验占位
+                this.ctx.strokeStyle = '#000'
+                this.ctx.lineWidth = 5
+                this.ctx.beginPath()
+                this.ctx.arc(halfHeight, halfHeight, r * 0.8, 0, Math.PI * 2)
+                this.ctx.stroke()
+                this.ctx.closePath()
+
+
+                //级内经验
+                this.ctx.strokeStyle = '#ff7f00'
+                this.ctx.lineWidth = 5
+                this.ctx.beginPath()
+                this.ctx.arc(halfHeight, halfHeight, r * 0.8, - Math.PI * .5, this.inLevel / this.totalInLevel * Math.PI * 2 - Math.PI * .5)
+                this.ctx.stroke()
+                this.ctx.closePath()
+
+                // 绘制等级
+                this.ctx.font = 'bold 40px Arial'
+                this.ctx.textAlign = 'center'
+                this.ctx.fillStyle = '#fff'
+                this.ctx.textBaseline ="middle"
+
+                this.ctx.fillText(this.level, halfHeight, halfHeight)
+
+                //绘制名称
+                this.ctx.font = 'bold 40px Arial'
+                this.ctx.textAlign = 'center'
+                this.ctx.fillStyle = '#fff'
+                this.ctx.textBaseline ="top"
+
+                this.ctx.fillText(this.name, (this.canvas.width - this.canvas.height) * .5 + this.canvas.height, 0)
+
+                let offsetY = 8
+                let offsetX = 8
+                let totalHeight = rectHeight - offsetY * 3
+                let blueBloodStart = halfHeight + r
+                let bloodBlueTotalLength = this.canvas.width - offsetX - blueBloodStart
+
+                //绘制蓝条
+                let blueCurrentLength = blueBloodStart + this.currentBlue / this.totalBlue * bloodBlueTotalLength
+                this.ctx.fillStyle = this.blueColor
+                this.ctx.beginPath()
+                this.ctx.moveTo(blueBloodStart, marginBottom - totalHeight * .25 - offsetY)
+                this.ctx.lineTo(blueCurrentLength, marginBottom - totalHeight * .25 - offsetY)
+                this.ctx.lineTo(blueCurrentLength, marginBottom - offsetY)
+                this.ctx.lineTo(blueBloodStart, marginBottom - offsetY)
+                this.ctx.lineTo(blueBloodStart, marginBottom - totalHeight * .25 - offsetY)
+                this.ctx.fill()
+                this.ctx.closePath()
+
+                //绘制血条
+                let bloodCurrentLength = blueBloodStart + this.currentBlood / this.totalBlood * bloodBlueTotalLength
+                this.ctx.fillStyle = this.bloodColor
+                this.ctx.beginPath()
+                this.ctx.moveTo(blueBloodStart, marginTop + offsetY)
+                this.ctx.lineTo(bloodCurrentLength, marginTop + offsetY)
+                this.ctx.lineTo(bloodCurrentLength, marginTop + totalHeight * .75 + offsetY)
+                this.ctx.lineTo(blueBloodStart, marginTop + totalHeight * .75 + offsetY)
+                this.ctx.lineTo(blueBloodStart, marginTop + offsetY)
+                this.ctx.fill()
+                this.ctx.closePath()
+
+                //血量刻度
+                this.ctx.strokeStyle = this.backgroundColor
+                this.ctx.lineWidth = 6
+
+                let splitNumber = this.totalBlood / this.bloodCellNumber
+                let step = (this.canvas.width - offsetX - blueBloodStart) / splitNumber
+                for(let i = 0; i < splitNumber; i ++){
+                    let length = 12
+                    if(i % 5 == 0){
+                        length = 20
+                    }
+                    this.ctx.beginPath()
+                    this.ctx.moveTo(blueBloodStart + i * step, marginTop + offsetY)
+                    this.ctx.lineTo(blueBloodStart + i * step, marginTop + offsetY + length)
+                    this.ctx.stroke()
+                    this.ctx.closePath()
+                }
+            }
+
+            test(id){// 测试输出用
+                let dom = document.querySelector(id)
+                dom.appendChild(this.canvas)
+            }
+
+        }
         
-        let ambientLight = new THREE.AmbientLight( 0xffffff)
-        scene.add(ambientLight)
+        var mixer, action;
+        let ssxObject, ssxOriginRotation
+        var clock = new THREE.Clock();
+        let sprite
+        let levelBlood
 
-        let light = new THREE.DirectionalLight( 0xffffff)
-        light.castShadow = true
-        light.shadow.camera.left = light.shadow.camera.bottom = -300
-        light.shadow.camera.right = light.shadow.camera.top = 300
-        light.position.set(10, -50, 100)
-        scene.add(light)
+        const speedNumber = evirenment == 'dev' ? 1 : 0.2
+        let speed = new THREE.Vector2()
 
 
-        var helper = new THREE.CameraHelper( light.shadow.camera );
-        scene.add( helper );
-
-        size = {
-            width: dom.offsetWidth,
-            height: dom.offsetHeight
+        //设置站立
+        const setStand = () => {
+            speed.set(0, 0)
+            action && action.stop()
         }
-        camera = new THREE.PerspectiveCamera(45, size.width / size.height, 0.5, 20000)
-        evirenment == 'dev'? camera.position.set(30, 30, 30): camera.position.set(30, 30, 30)
-        camera.up.set(0, 0, 1)
 
-        renderer = new THREE.WebGLRenderer({
-            antialias: true,
-            alpha: true
-        })
-        renderer.setSize(size.width, size.height)
-        renderer.setClearColor(0x000000)
-        renderer.setPixelRatio(window.devicePixelRatio)
-        dom.appendChild(renderer.domElement)
+        const go = (x, y) => {
+            speed.set(x, y)
+            action && action.play()
+        }
 
-        renderer.gammaFactor = 2
-        renderer.gammaOutput = true
-        renderer.shadowMap.enabled = true
-    }
-    var dom = document.querySelector('#output')
-    init(dom)
+        loader.load( 'model.gltf', function ( gltf ) {
+            gltf.scene.rotation.x = Math.PI * .5
+            gltf.scene.rotation.y = -Math.PI * .25
 
-    let controls
+            gltf.scene.traverse((item) => {
+                if(item.material){
+                        item.material = new THREE.MeshBasicMaterial({map: item.material.map, transparent: true, alphaTest: 0.9})
+                }
 
-    let loader = new THREE.GLTFLoader().setPath( evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/');
-    THREE.DRACOLoader.setDecoderPath(  evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/' );
-    loader.setDRACOLoader( new THREE.DRACOLoader() )
+                if(item.children.length > 0 && (item.name.includes('地') || item.name.includes('路'))){
+                    item.traverse((child) => {
+                        child.receiveShadow = true
+                    })
+                }
+
+            })
+
+            scene.add(gltf.scene)
+
+            let tl = new THREE.TextureLoader()
+            tl.setPath( evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/')
+            loader.load('ssx.gltf', (ssx) => {
+                ssx.scene.rotation.x = Math.PI * .5
+                ssx.scene.rotation.y = Math.PI * 1.5
+
+                ssxOriginRotation = ssx.scene.rotation.clone()
+
+                ssx.scene.scale.set(4, 4, 4)
+                ssx.scene.position.set(218.27291759843078, -4.683324102610722, 0)
 
 
-    
-    var mixer, action;
-    let ssxObject, ssxOriginRotation
-    var clock = new THREE.Clock();
+                ssx.scene.traverse((obj) => {
+                    if(obj.material){
+                        let name = obj.name
+                        obj.material.map = tl.load(name + '.png')
 
-    const speedNumber = evirenment == 'dev' ? 1 : 0.2
-    let speed = new THREE.Vector2()
-
-
-    //设置站立
-    const setStand = () => {
-        speed.set(0, 0)
-        action && action.stop()
-    }
-
-    const go = (x, y) => {
-        speed.set(x, y)
-        action && action.play()
-    }
-
-    loader.load( 'model.gltf', function ( gltf ) {
-        gltf.scene.rotation.x = Math.PI * .5
-        gltf.scene.rotation.y = -Math.PI * .25
-
-        gltf.scene.traverse((item) => {
-            if(item.material){
-                    item.material = new THREE.MeshBasicMaterial({map: item.material.map, transparent: true, alphaTest: 0.9})
-            }
-
-            if(item.children.length > 0 && (item.name.includes('地') || item.name.includes('路'))){
-                item.traverse((child) => {
-                    child.receiveShadow = true
+                        obj.castShadow = true
+                    }
                 })
-            }
+
+                scene.add(ssx.scene)
+
+                ssxObject = ssx.scene
+                controls = new MOBAControls( camera, {
+                    dom: renderer.domElement,
+                    target: ssxObject
+                });
+
+                mixer = new THREE.AnimationMixer(ssx.scene)
+                action = mixer.clipAction(ssx.animations[0])
+                action.play()
+
+                levelBlood = new LevelBlood(name + '', {inLevel: 49})
+                levelBlood.test('#output')
+                sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: new THREE.CanvasTexture(levelBlood.canvas),
+                    transparent: true,
+                    alphaTest: 0.6
+                }))
+                sprite.scale.set(8, 2, 1)
+                scene.add(sprite)
+
+                document.querySelector('#layer').style.display = 'none'
+
+                let manager = nipplejs.create({
+                    zone: dom,
+                    multitouch: true,
+                    maxNumberOfNipples: 1,
+                    color: 'black'
+                })
+
+                let position = new THREE.Vector2()
+                manager.on('start', (evt, data) => {
+                    let {x, y} = data.position
+                    position.set(x, y)
+                })
+
+                manager.on('move', (evt, data) => {
+                    let {x, y} = data.position
+
+                    let offset = position.clone()
+                    let length = offset.sub(new THREE.Vector2(x, y)).length()
+
+                    // 限制最小响应
+                    if(length < 20){
+                        setStand()
+                        return
+                    }
+                    if(data.angle){
+                        let degree = data.angle.radian - Math.PI * .25
+                        let {x, y, z} = ssxOriginRotation
+                        ssxObject.rotation.set(x, y + degree, z)
+                        go(- Math.cos(degree), - Math.sin(degree))
+                    }else{
+                        setStand()
+                    }
+                })
+
+                manager.on('end', (evt, data) => {
+                    setStand()
+                    position.set(0, 0)
+                }
+                )
+            })
 
         })
 
-        scene.add(gltf.scene)
+    //  nipple.js全面替代键盘操作
+        // const keyDown = (e) => {
+        //     e.preventDefault()
+        //     let keyCode = e.keyCode
+        //     if(!ssxObject) return
+        //     if(keyCode == 87 || keyCode == 38){//w
+        //         speed.y = -1
+        //     }
 
-        let tl = new THREE.TextureLoader()
-        tl.setPath( evirenment == 'dev' ? './model/': 'https://xiongtongzi.oss-cn-shanghai.aliyuncs.com/model/')
-        loader.load('ssx.gltf', (ssx) => {
-            ssx.scene.rotation.x = Math.PI * .5
-            ssx.scene.rotation.y = Math.PI * 1.5
+        //     if(keyCode == 65 || keyCode == 37){//a
+        //         speed.x = 1
+        //     }
 
-            ssxOriginRotation = ssx.scene.rotation.clone()
+        //     if(keyCode == 83 || keyCode == 40){//s
+        //         speed.y = 1
+        //     }
 
-            ssx.scene.scale.set(4, 4, 4)
-            ssx.scene.position.set(218.27291759843078, -4.683324102610722, 0)
+        //     if(keyCode == 68 || keyCode == 39){//d
+        //         speed.x = -1
+        //     }
+        // }
 
+        // const keyUp = (e) => {
+        //     e.preventDefault()
+        //     let keyCode = e.keyCode
+        //     if(!ssxObject) return
+        //     if(keyCode == 87 || keyCode == 38){
+        //         speed.y = 0
+        //     }
 
-            ssx.scene.traverse((obj) => {
-                if(obj.material){
-                    let name = obj.name
-                    obj.material.map = tl.load(name + '.png')
+        //     if(keyCode == 65 || keyCode == 37){
+        //         speed.x = 0
+        //     }
 
-                    obj.castShadow = true
-                }
-            })
+        //     if(keyCode == 83 || keyCode == 40){
+        //         speed.y = 0
+        //     }
 
-            scene.add(ssx.scene)
+        //     if(keyCode == 68 || keyCode == 39){
+        //         speed.x = 0
+        //     }
+        // }
 
-            ssxObject = ssx.scene
-            controls = new MOBAControls( camera, {
-                dom: renderer.domElement,
-                target: ssxObject
-            });
+        const render = () => {
+            controls && controls.update()
 
-            mixer = new THREE.AnimationMixer(ssx.scene)
-            action = mixer.clipAction(ssx.animations[0])
-            action.play()
-            document.querySelector('#layer').style.display = 'none'
-
-            let manager = nipplejs.create({
-                zone: dom,
-                multitouch: true,
-                maxNumberOfNipples: 1,
-                color: 'black'
-            })
-
-            let position = new THREE.Vector2()
-            manager.on('start', (evt, data) => {
-                let {x, y} = data.position
-                position.set(x, y)
-            })
-
-            manager.on('move', (evt, data) => {
-                let {x, y} = data.position
-
-                let offset = position.clone()
-                let length = offset.sub(new THREE.Vector2(x, y)).length()
-
-                // 限制最小响应
-                if(length < 20){
-                    setStand()
-                    return
-                }
-                if(data.angle){
-                    let degree = data.angle.radian - Math.PI * .25
-                    let {x, y, z} = ssxOriginRotation
-                    ssxObject.rotation.set(x, y + degree, z)
-                    go(- Math.cos(degree), - Math.sin(degree))
+            if(ssxObject){
+                if(speed.length() > 0){
+                    let {x, y} = speed.clone().normalize().multiplyScalar(speedNumber)
+                    ssxObject.position.y += y
+                    ssxObject.position.x += x
+                    levelBlood.currentBlue > 0 && levelBlood.config({currentBlue: levelBlood.currentBlue - 0.1})
                 }else{
-                    setStand()
+                    levelBlood.currentBlue < levelBlood.totalBlue && levelBlood.config({currentBlue: levelBlood.currentBlue + 0.1})
                 }
-            })
 
-            manager.on('end', (evt, data) => {
-                setStand()
-                position.set(0, 0)
+                sprite.material.map.image = levelBlood.canvas
+                sprite.material.map.needsUpdate = true
             }
-            )
-        })
+                
 
-    })
+            sprite && sprite.position.copy(ssxObject.position).add(new THREE.Vector3(0, 0, 9))
 
- //  nipple.js全面替代键盘操作
-    // const keyDown = (e) => {
-    //     e.preventDefault()
-    //     let keyCode = e.keyCode
-    //     if(!ssxObject) return
-    //     if(keyCode == 87 || keyCode == 38){//w
-    //         speed.y = -1
-    //     }
+            var delta = clock.getDelta();
+            if(speed.length() > 0){
+                mixer && mixer.update( delta );
+            }
 
-    //     if(keyCode == 65 || keyCode == 37){//a
-    //         speed.x = 1
-    //     }
+            renderer.render(scene, camera)
+            requestAnimationFrame(render)
+        }
+        render()
 
-    //     if(keyCode == 83 || keyCode == 40){//s
-    //         speed.y = 1
-    //     }
 
-    //     if(keyCode == 68 || keyCode == 39){//d
-    //         speed.x = -1
-    //     }
-    // }
+        let mouse = new THREE.Vector2()
+        let raycaster = new THREE.Raycaster()
 
-    // const keyUp = (e) => {
-    //     e.preventDefault()
-    //     let keyCode = e.keyCode
-    //     if(!ssxObject) return
-    //     if(keyCode == 87 || keyCode == 38){
-    //         speed.y = 0
-    //     }
+        const move = (e) => {
+            mouse.x = ((e.clientX - dom.getBoundingClientRect().left) / dom.offsetWidth) * 2 - 1
+            mouse.y = -((e.clientY - dom.getBoundingClientRect().top) / dom.offsetHeight) * 2 + 1
+            raycaster.setFromCamera( mouse, camera )
 
-    //     if(keyCode == 65 || keyCode == 37){
-    //         speed.x = 0
-    //     }
-
-    //     if(keyCode == 83 || keyCode == 40){
-    //         speed.y = 0
-    //     }
-
-    //     if(keyCode == 68 || keyCode == 39){
-    //         speed.x = 0
-    //     }
-    // }
-
-    const render = () => {
-        controls && controls.update()
-
-        if(ssxObject && speed.length() > 0){
-            let {x, y} = speed.clone().normalize().multiplyScalar(speedNumber)
-            ssxObject.position.y += y
-            ssxObject.position.x += x
+            let intersects = raycaster.intersectObjects(scene.children, true)
+            if(intersects.length > 0){
+                console.log(intersects[0])
+            }
         }
 
-        var delta = clock.getDelta();
-        if(speed.length() > 0){
-            mixer && mixer.update( delta );
+        dom.addEventListener('click', move, false)
+
+        const resize = () => {
+            var size = {
+                width: dom.offsetWidth,
+                height: dom.offsetHeight
+            }
+            renderer.setSize(size.width, size.height)
+            camera.aspect = size.width / size.height
+            camera.updateProjectionMatrix()
         }
 
-        renderer.render(scene, camera)
-        requestAnimationFrame(render)
+        window.addEventListener('resize', resize, false)
+
+        // const FullScreen = () => {
+        //     let isFullscreen = document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen
+        //     if(!isFullscreen){//进入全屏,多重短路表达式
+        //         (document.requestFullscreen && document.requestFullscreen())||
+        //         (document.mozRequestFullScreen && document.mozRequestFullScreen())||
+        //         (document.webkitRequestFullscreen && document.webkitRequestFullscreen())||
+        //         (document.msRequestFullscreen && document.msRequestFullscreen());
+        //     }else{	//退出全屏,三目运算符
+        //         document.exitFullscreen ? document.exitFullscreen():
+        //         document.mozCancelFullScreen ? document.mozCancelFullScreen():
+        //         document.webkitExitFullscreen ? document.webkitExitFullscreen():'';
+        //     }
+        // }
+        const orientationchange = () => {
+            if(window.innerHeight < window.innerWidth){
+                console.log('full')
+                // document.body.requestFullscreen && document.body.requestFullscreen()
+            }else{
+                console.log('exist')
+                // document.exitFullscreen && document.exitFullscreen()
+            }
+            resize()
+        }
+
+        // window.addEventListener('orientationchange', orientationchange, false);
+
+
+        // window.addEventListener('keydown', keyDown, false)
+        // window.addEventListener('keyup', keyUp, false)
     }
-    render()
-
-
-    let mouse = new THREE.Vector2()
-    let raycaster = new THREE.Raycaster()
-
-    const move = (e) => {
-        mouse.x = ((e.clientX - dom.getBoundingClientRect().left) / dom.offsetWidth) * 2 - 1
-        mouse.y = -((e.clientY - dom.getBoundingClientRect().top) / dom.offsetHeight) * 2 + 1
-        raycaster.setFromCamera( mouse, camera )
-
-        let intersects = raycaster.intersectObjects(scene.children, true)
-        if(intersects.length > 0){
-            console.log(intersects[0])
-        }
-    }
-
-    dom.addEventListener('click', move, false)
-
-    const resize = () => {
-        var size = {
-            width: dom.offsetWidth,
-            height: dom.offsetHeight
-        }
-        renderer.setSize(size.width, size.height)
-        camera.aspect = size.width / size.height
-        camera.updateProjectionMatrix()
-    }
-
-    window.addEventListener('resize', resize, false)
-
-    // const FullScreen = () => {
-    //     let isFullscreen = document.fullScreen || document.mozFullScreen || document.webkitIsFullScreen
-    //     if(!isFullscreen){//进入全屏,多重短路表达式
-    //         (document.requestFullscreen && document.requestFullscreen())||
-    //         (document.mozRequestFullScreen && document.mozRequestFullScreen())||
-    //         (document.webkitRequestFullscreen && document.webkitRequestFullscreen())||
-    //         (document.msRequestFullscreen && document.msRequestFullscreen());
-    //     }else{	//退出全屏,三目运算符
-    //         document.exitFullscreen ? document.exitFullscreen():
-    //         document.mozCancelFullScreen ? document.mozCancelFullScreen():
-    //         document.webkitExitFullscreen ? document.webkitExitFullscreen():'';
-    //     }
-    // }
-    const orientationchange = () => {
-        if(window.innerHeight < window.innerWidth){
-            console.log('full')
-            // document.body.requestFullscreen && document.body.requestFullscreen()
-        }else{
-            console.log('exist')
-            // document.exitFullscreen && document.exitFullscreen()
-        }
-        resize()
-    }
-
-    // window.addEventListener('orientationchange', orientationchange, false);
-
-
-    // window.addEventListener('keydown', keyDown, false)
-    // window.addEventListener('keyup', keyUp, false)
 
 </script>
 </html>
