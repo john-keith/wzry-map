@@ -110,7 +110,7 @@
     if(evirenment == 'dev'){new VConsole()}
 
     window.onload = () => {
-        let name = evirenment == 'dev'? '汤圆skr狠人': prompt('请给自己角色取个名字，此版本碰撞存在问题，本着不会不做不学的原则请各位帮助', '如: 王xx')
+        let name = evirenment == 'dev'? '汤圆skr狠人': prompt('请给自己角色取个名字，碰撞检测已暂时被注释', '如: 王xx')
         name = name || '王xx'
         let scene
         let camera
@@ -384,10 +384,11 @@
                 scene.add(ssx.scene)
 
                 ssxObject = ssx.scene
+
                 controls = new MOBAControls( camera, {
                     dom: renderer.domElement,
                     target: ssxObject
-                });
+                })
 
                 mixer = new THREE.AnimationMixer(ssx.scene)
                 action = mixer.clipAction(ssx.animations[0])
@@ -435,20 +436,20 @@
                         ssxObject.rotation.set(x, y + degree, z)
                         go(- Math.cos(degree), - Math.sin(degree))
 
-                        let {x: posx, y: posy} = ssxObject.position
+                        // let {x: posx, y: posy} = ssxObject.position
 
-                        // 射线判断
-                        pointerRaycaster.set(new THREE.Vector3(posx, posy, 1), new THREE.Vector3(- Math.cos(degree), - Math.sin(degree), 0).normalize())
+                        // // 射线判断
+                        // pointerRaycaster.set(new THREE.Vector3(posx, posy, 1), new THREE.Vector3(- Math.cos(degree), - Math.sin(degree), 0).normalize())
 
-                        let raycasterGet = pointerRaycaster.intersectObjects(gltf.scene.children, true)
-                        // console.log(raycasterGet)
-                        if(raycasterGet.length > 0){
-                            let one = raycasterGet[0]
-                            if(one.distance < 1){
-                                speed.set(0, 0)
-                                console.log('停止')
-                            }
-                        }
+                        // let raycasterGet = pointerRaycaster.intersectObjects(gltf.scene.children, true)
+                        // // console.log(raycasterGet)
+                        // if(raycasterGet.length > 0){
+                        //     let one = raycasterGet[0]
+                        //     if(one.distance < 1){
+                        //         speed.set(0, 0)
+                        //         console.log('停止')
+                        //     }
+                        // }
                     }else{
                         setStand()
                     }
@@ -514,9 +515,11 @@
                     let {x, y} = speed.clone().normalize().multiplyScalar(speedNumber)
                     ssxObject.position.y += y
                     ssxObject.position.x += x
-                    levelBlood.currentBlue > 0 && levelBlood.config({currentBlue: levelBlood.currentBlue - 0.1})
+                    levelBlood.currentBlue > 0 && levelBlood.config({currentBlue: levelBlood.currentBlue - 0.2})
+                    levelBlood.currentBlood > 0 && levelBlood.config({currentBlood: levelBlood.currentBlood - 0.1})
                 }else{
                     levelBlood.currentBlue < levelBlood.totalBlue && levelBlood.config({currentBlue: levelBlood.currentBlue + 0.1})
+                    levelBlood.currentBlood < levelBlood.totalBlood && levelBlood.config({currentBlood: levelBlood.currentBlood + 0.05})
                 }
 
                 sprite.material.map.image = levelBlood.canvas
